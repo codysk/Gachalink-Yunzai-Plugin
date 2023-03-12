@@ -38,7 +38,8 @@ export class gachaLink extends plugin {
         }
         lodash.forEach(fragments, (frag) => {
             let kvPair = frag.trim().split('=')
-            if (kvPair.length != 2) return
+            if (kvPair.length < 2) return
+            kvPair[1] = kvPair.slice(1).join('=')
             if (!Object.keys(params).includes(kvPair[0])) return
             params[kvPair[0]] = kvPair[1]
         })
