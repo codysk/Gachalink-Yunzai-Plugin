@@ -16,7 +16,7 @@ export class gachaLink extends plugin {
                     fnc: 'setSToken',
                 },
                 {
-                    reg: '^#*(获取)*(祈愿|抽卡)(链接)$',
+                    reg: '^#*(获取)*(祈愿|抽卡)(链接|数据)$',
                     fnc: 'genGachaLink'
                 }
             ]
