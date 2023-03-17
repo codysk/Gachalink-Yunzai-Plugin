@@ -1,7 +1,6 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import GachaLink from '../model/gachalink.js'
 import lodash from 'lodash'
-import { gcLog } from '../../genshin/apps/gcLog.js'
 const CACHE_BASEKEY = "Yz::plugin::gachalink"
 export class gachaLink extends plugin {
     constructor (e) {
@@ -57,20 +56,7 @@ export class gachaLink extends plugin {
         lodash.forEach(params, (value, key) => {
             stoken += `${key}=${value};`
         })
-        try {
-            let apiUrl = await this.GachaLink.generateGachaLink(stoken)
-            await this.reply(`生成成功: ${apiUrl}`)
-            redis.set(`${CACHE_BASEKEY}::SToken::${this.GachaLink.cookieObj.uid}`, stoken)
-            this.e.msg = apiUrl
-
-            let gcLogPlugin = new gcLog()
-            gcLogPlugin.e = this.e
-            await gcLogPlugin.logUrl()
-            return true
-        } catch (err) {
-            await this.reply(err)
-            return true
-        }
+        await this.tryToGenerateGachaLink(stoken)
     }
     async genGachaLink() {
         this.GachaLink = new GachaLink(this.e)
@@ -80,17 +66,21 @@ export class gachaLink extends plugin {
             this.e.msg = "#米游社登录"
             return true
         }
+        await this.tryToGenerateGachaLink(stoken)
+    }
+
+    async tryToGenerateGachaLink(stoken) {
         try {
             let apiUrl = await this.GachaLink.generateGachaLink(stoken)
             await this.reply(`生成成功: ${apiUrl}`)
-            this.e.msg = apiUrl
-
-            let gcLogPlugin = new gcLog()
-            gcLogPlugin.e = this.e
-            await gcLogPlugin.logUrl()
+           
+            // republish the gacha link to event loop
+            var {reply, ...messageEvent} = this.e
+            messageEvent.message=[{type: 'text', text: apiUrl}]
+            await global.Bot.tripAsync("message", messageEvent)
             return true
         } catch (err) {
-            await this.reply(err)
+            await this.reply(err.message)
             return true
         }
     }
