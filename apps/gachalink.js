@@ -75,7 +75,7 @@ export class gachaLink extends plugin {
             await this.reply(`生成成功: ${apiUrl}`)
            
             // republish the gacha link to event loop
-            var {reply, ...messageEvent} = this.e
+            var {reply, msg, ...messageEvent} = this.e
             messageEvent.message=[{type: 'text', text: apiUrl}]
             await global.Bot.tripAsync("message", messageEvent)
             return true
