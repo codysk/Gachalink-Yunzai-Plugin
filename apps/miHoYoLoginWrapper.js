@@ -29,10 +29,15 @@ export class miHoYoLoginWrapper extends plugin {
         this.e[this.wrappedKey] = true
         var originReplay = this.e.replyNew.bind(this.e)
         this.e.reply = async (content, quote = false) => {
-            if (/^(ltoken|stoken)=/.test(content)) {
-                var {reply, msg, ...messageEvent} = this.e
-                messageEvent.message=[{type: 'text', text: content}]
+            var {reply, msg, ...messageEvent} = this.e
+            messageEvent.message=[{type: 'text', text: content}]
+            if (/^ltoken=/.test(content)) {
+                await originReplay("尝试自动绑定ck...", quote = false)
                 await global.Bot.tripAsync("message", messageEvent)
+            }
+            if (/^stoken=/.test(content)) {
+                setTimeout( () => global.Bot.tripAsync("message", messageEvent), 3000)
+                await originReplay("3 秒后自动开始抓取抽卡记录", quote = false)
             }
             return originReplay(content, quote = false)
         }
