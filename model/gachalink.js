@@ -1,8 +1,9 @@
 import fetch from 'node-fetch'
 import querystring from 'node:querystring'
 import crypto from 'node:crypto'
-import GsCfg from '../../genshin/model/gsCfg.js'
+import MysInfo from '../../genshin/model/mys/mysInfo.js'
 import lodash from 'lodash'
+import NoteUser from '../../genshin/model/mys/NoteUser.js'
 
 const CLIENT_VERSION='2.40.1'
 const CLIENT_TYPE='2'
@@ -14,18 +15,24 @@ export default class GachaLink {
         this.userId = e?.user_id
         this.model = 'GachaLink'
         this._path = process.cwd().replace(/\\/g, '/')
-        this.cookieObj = this.getMainCookieObj()
+        this.cookieObj = {}
     }
 
-    getMainCookieObj() {
-        let cookieObjs = GsCfg.getBingCkSingle(this.userId)
-        let mainCookie = lodash.pickBy(cookieObjs, (obj) => {
-            return obj.isMain
-        })
-        if (Object.keys(mainCookie).length == 0) {
-            return {}
+    async getMainCookieObj() {
+        if (Object.keys(this.cookieObj).length != 0) {
+            return this.cookieObj
         }
-        return mainCookie[Object.keys(mainCookie)[0]]
+
+        let user = await NoteUser.create(this.userId)
+        
+        var cookieObjs = {}
+        if (user.hasOwnProperty('mainCk')) {
+            cookieObjs = user.mainCK
+        } else {
+            cookieObjs = user.getMysUser()
+        }
+        this.cookieObj = cookieObjs
+        return this.cookieObj
     }
     
     getHeader(cookie) {
@@ -53,7 +60,8 @@ export default class GachaLink {
 
     async getRole(stoken) {
         let api='https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByStoken'
-        let headers = this.getHeader(this.cookieObj.ck + stoken)
+        let cookieObj = await this.getMainCookieObj()
+        let headers = this.getHeader(cookieObj.ck + stoken)
         let resp = await fetch(api, {method: 'GET', headers: headers})
         let ret = await resp.json()
         if (ret.retcode != 0) {
@@ -74,7 +82,8 @@ export default class GachaLink {
             "game_uid": role["game_uid"],
             "region": role["region"],
         }
-        let headers = this.getHeader(this.cookieObj.ck + stoken)
+        let cookieObj = await this.getMainCookieObj()
+        let headers = this.getHeader(cookieObj.ck + stoken)
         let api = "https://api-takumi.mihoyo.com/binding/api/genAuthKey"
         let resp = await fetch(api, {method: "POST", headers: headers, body: JSON.stringify(data)})
         let ret = await resp.json()
