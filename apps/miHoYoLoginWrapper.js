@@ -29,7 +29,7 @@ export class miHoYoLoginWrapper extends plugin {
         this.e[this.wrappedKey] = true
         var originReplay = this.e.replyNew.bind(this.e)
         this.e.reply = async (content, quote = false) => {
-            var {reply, msg, ...messageEvent} = this.e
+            var {reply, msg, isGs, isSr, ...messageEvent} = this.e
             messageEvent.message=[{type: 'text', text: content}]
             if (/^ltoken=/.test(content)) {
                 await originReplay("尝试自动绑定ck...", quote = false)
@@ -42,7 +42,11 @@ export class miHoYoLoginWrapper extends plugin {
             return originReplay(content, quote = false)
         }
         this.e.msg = ""
-        await global.Bot.tripAsync("message", this.e)
+        
+        // avoid redefine prop on redispatch
+        var {isGs, isSr, ...messageEvent} = this.e
+        
+        await global.Bot.tripAsync("message", messageEvent)
         return true
     }
     async contextWrapper() {
